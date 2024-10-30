@@ -1,7 +1,7 @@
 import { PublicKey } from '@solana/web3.js';
 
 import { getSolPrice } from './getSolPrice';
-import { fromLamport, solConnection } from '../utils';
+import { fromDecimals, solConnection } from '../utils';
 
 export interface GetWalletBalanceProps {
   solAmount: number;
@@ -11,25 +11,16 @@ export interface GetWalletBalanceProps {
 export const getWalletBalance = async (
   address: string
 ): Promise<GetWalletBalanceProps> => {
-  try {
-    const wallet = new PublicKey(address);
+  const wallet = new PublicKey(address);
 
-    const balanceInLamports = await solConnection.getBalance(wallet);
+  const balanceInLamports = await solConnection.getBalance(wallet);
 
-    const solAmount = fromLamport(balanceInLamports);
+  const solAmount = fromDecimals(balanceInLamports);
 
-    const solPrice = await getSolPrice();
+  const solPrice = await getSolPrice();
 
-    return {
-      solAmount,
-      solValue: solAmount * solPrice,
-    };
-  } catch (e) {
-    console.error(e);
-    console.log('Error while fetching wallet sol balance');
-    return {
-      solAmount: 0,
-      solValue: 0,
-    };
-  }
+  return {
+    solAmount,
+    solValue: solAmount * solPrice,
+  };
 };

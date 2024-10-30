@@ -9,7 +9,6 @@ export const getSolPrice = async (): Promise<number> => {
     return parseFloat(tokenAPrice.data.attributes.token_prices[WSOL]);
   } catch (e) {
     console.error(e);
-    console.error('Error while fetching SOL Price');
-    return 0;
+    throw 'Error while fetching SOL Price';
   }
 };

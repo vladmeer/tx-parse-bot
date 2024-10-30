@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 import { Bot, Context, MemorySessionStorage, session } from 'grammy';
 import { type ChatMember } from 'grammy/types';
 
-import { getWalletBalance } from './src/lib';
+import { getWalletBalance, parseRaydiumSwap } from './src/lib';
 import { Session, SessionContext } from './src/contexts';
 import { botMenu } from './src/menu';
 import {
@@ -56,20 +56,30 @@ bot.on('message', async (ctx) => {
       if (!validatePublicKey(address)) {
         ctx.reply(getWalletBalanceError('Invalid wallet address'));
       } else {
-        const balance = await getWalletBalance(address);
-        ctx.reply(`${balance.solAmount} SOL | ${balance.solValue} USD`);
+        try {
+          const balance = await getWalletBalance(address);
+          ctx.reply(`${balance.solAmount} SOL | ${balance.solValue} USD`);
+        } catch (e) {
+          console.error(e);
+          ctx.reply(getWalletBalanceError(JSON.stringify(e)));
+        }
       }
       ctx.session.method = '';
       break;
     }
-    case 'track': {
+    case 'parse-swap': {
       const signature = ctx.message.text || '';
 
       if (!validateTransactionSignature(signature)) {
         ctx.reply(parseSwapError('Invalid transaction signature'));
       } else {
-        // const balance = await getWalletBalance(signature);
-        ctx.reply(`${signature}`);
+        try {
+          const info = await parseRaydiumSwap(signature);
+          ctx.reply(JSON.stringify(info));
+        } catch (e) {
+          console.error(e);
+          ctx.reply(parseSwapError(JSON.stringify(e)));
+        }
       }
       ctx.session.method = '';
       break;
