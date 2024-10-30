@@ -3,8 +3,15 @@ import dotenv from 'dotenv';
 import { Bot, Context, MemorySessionStorage, session } from 'grammy';
 import { type ChatMember } from 'grammy/types';
 
-import { MyContext, Session } from './src/my-context';
-import { menu } from './src/menu/index';
+import { getWalletBalance } from './src/lib';
+import { Session, SessionContext } from './src/contexts';
+import { botMenu } from './src/menu';
+import {
+  getWalletBalanceError,
+  parseSwapError,
+  validatePublicKey,
+  validateTransactionSignature,
+} from './src/utils';
 
 dotenv.config();
 
@@ -20,7 +27,7 @@ function getSessionKey(ctx: Context): string | undefined {
 
 const adapter = new MemorySessionStorage<ChatMember>();
 // Create an instance of the `Bot` class and pass your bot token to it.
-const bot = new Bot<MyContext>(token); // <-- put your bot token between the ""
+const bot = new Bot<SessionContext>(token); // <-- put your bot token between the ""
 
 // You can now register listeners on your bot object `bot`.
 // grammY will call the listeners when users send messages to your bot.
@@ -31,36 +38,52 @@ bot.use(
   })
 );
 bot.use(chatMembers(adapter));
-bot.use(menu);
+bot.use(botMenu);
+
 // Handle the /start command.
 bot.command('start', (ctx) =>
-  ctx.reply('Welcome! Up and running.', {
-    reply_markup: menu,
+  ctx.reply('Welcome to MonitorFi Bot!', {
+    reply_markup: botMenu,
   })
 );
+
 // Handle other messages.
-bot.on('message', (ctx) => {
+bot.on('message', async (ctx) => {
   switch (ctx.session.method) {
     case 'balance': {
-      ctx.reply('0 sol');
+      const address = ctx.message.text || '';
+
+      if (!validatePublicKey(address)) {
+        ctx.reply(getWalletBalanceError('Invalid wallet address'));
+      } else {
+        const balance = await getWalletBalance(address);
+        ctx.reply(`${balance.solAmount} SOL | ${balance.solValue} USD`);
+      }
       ctx.session.method = '';
       break;
     }
     case 'track': {
-      ctx.reply('Swap');
+      const signature = ctx.message.text || '';
+
+      if (!validateTransactionSignature(signature)) {
+        ctx.reply(parseSwapError('Invalid transaction signature'));
+      } else {
+        // const balance = await getWalletBalance(signature);
+        ctx.reply(`${signature}`);
+      }
       ctx.session.method = '';
       break;
     }
     default: {
       ctx.reply('Trigger the menu', {
-        reply_markup: menu,
+        reply_markup: botMenu,
       });
     }
   }
 });
 
 bot.catch((error) => {
-  console.error('ERROR on handling update occured', error);
+  console.error('[BOT HANDLER ERROR]:', error);
 });
 
 // Now that you specified how to handle messages, you can start your bot.

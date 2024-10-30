@@ -6,7 +6,7 @@ export type Session = {
   method?: string;
 };
 
-export type MyContext = BaseContext &
+export type SessionContext = BaseContext &
   SessionFlavor<Session> &
   I18nFlavor &
   ChatMembersFlavor;
