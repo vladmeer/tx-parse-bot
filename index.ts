@@ -62,6 +62,7 @@ bot.on('message', async (ctx) => {
         } catch (e) {
           console.error(e);
           ctx.reply(getWalletBalanceError(JSON.stringify(e)));
+          break;
         }
       }
       ctx.session.method = '';
@@ -75,7 +76,7 @@ bot.on('message', async (ctx) => {
       } else {
         try {
           const info = await parseRaydiumSwap(signature);
-          ctx.reply(JSON.stringify(info));
+          ctx.reply(JSON.stringify(info, null, 2));
         } catch (e) {
           console.error(e);
           ctx.reply(parseSwapError(JSON.stringify(e)));
