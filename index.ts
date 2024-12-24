@@ -16,6 +16,7 @@ import {
 dotenv.config();
 
 const token = process.env.BOT_TOKEN;
+console.log("🚀 ~ token:", token)
 if (!token) {
   throw new Error(
     'You have to provide the bot-token from @BotFather via environment variable (BOT_TOKEN)'
